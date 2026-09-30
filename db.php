@@ -1,10 +1,10 @@
 <?php
 try {
-    // Создаем базу прямо в файле внутри вашего проекта на Render
-    $pdo = new PDO("sqlite:/var/www/html/database.sqlite");
+    // База данных будет создаваться и сохраняться прямо в файле на сервере
+    $pdo = new PDO("sqlite:/tmp/database.sqlite");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Автоматически создаем таблицу пользователей при первом открытии
+    // Автоматически создаем таблицу пользователей, если её еще нет
     $sql = "CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT NOT NULL UNIQUE,

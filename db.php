@@ -1,26 +1,26 @@
 <?php
-// Переменные берутся напрямую из скрытых настроек хостинга Render
-$host = getenv('DB_HOST');
-$db   = getenv('DB_NAME');     
-$user = getenv('DB_USER');
-$pass = getenv('DB_PASS');           
+$host = 'dpg-dauk1m0473hc73bk5hag-a'; // Внутренний хост в Render
+$db   = 'my_database_7vkd';     
+$user = 'my_database_7vkd_user';
+$pass = '4s34tqHLipR5hb0uLHsshtX66F1c1jcJ';           
 $port = 5432; 
 
 try {
-    // Подключение к базе данных PostgreSQL
-    $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$db", $user, $pass);
+    // Подключаемся строго через стандартный драйвер mysql
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Автоматическое создание таблицы users
+    // Этот код сам автоматически создаст таблицу users на MySQL, если её нет
     $sql = "CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(255) NOT NULL UNIQUE,
         username VARCHAR(100) NOT NULL UNIQUE,
         name VARCHAR(100),
         gender VARCHAR(20),
         age INT,
         password VARCHAR(255) NOT NULL
-    );";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    
     $pdo->exec($sql);
 
 } catch(PDOException $e) {

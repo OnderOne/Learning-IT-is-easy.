@@ -12,79 +12,92 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$genderText = match($user['gender'] ?? '') {
-    'male' => 'Мужчина',
-    'female' => 'Женщина',
-    default => 'Не указано'
+if (!$user) {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit;
+}
+
+$genderText = match ($user['gender'] ?? '') {
+    'male' => 'Чоловіча',
+    'female' => 'Жіноча',
+    'other' => 'Інша',
+    default => 'Не вказано'
 };
 ?>
 
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Профиль</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Профіль</title>
 
 <style>
 body {
-    margin:0;
-    font-family: Arial;
-    background:#0b1220;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b1220;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+    box-sizing: border-box;
 }
 
 .card {
     width: 400px;
-    background:#111827;
-    color:white;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 0 25px rgba(0,0,0,0.6);
+    max-width: calc(100% - 40px);
+    background: #111827;
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+    box-sizing: border-box;
 }
 
-h2 { text-align:center; }
+h2 {
+    text-align: center;
+}
 
 p {
-    padding:10px;
-    border-bottom:1px solid #1f2937;
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+    overflow-wrap: anywhere;
 }
 
 a {
-    display:block;
-    text-align:center;
-    margin-top:10px;
-    color:#60a5fa;
-    text-decoration:none;
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    color: #60a5fa;
+    text-decoration: none;
 }
 
 a:hover {
-    text-decoration:underline;
+    text-decoration: underline;
 }
 </style>
 </head>
 
 <body>
-
 <div class="card">
+    <h2>👤 Профіль</h2>
 
-<h2>👤 Профиль</h2>
+    <p><b>Електронна пошта:</b> <?= htmlspecialchars($user['email'] ?? 'Не вказано', ENT_QUOTES, 'UTF-8') ?></p>
+    <p><b>Логін:</b> <?= htmlspecialchars($user['username'] ?? 'Не вказано', ENT_QUOTES, 'UTF-8') ?></p>
+    <p><b>Ім’я:</b> <?= htmlspecialchars($user['name'] ?: 'Не вказано', ENT_QUOTES, 'UTF-8') ?></p>
+    <p><b>Стать:</b> <?= htmlspecialchars($genderText, ENT_QUOTES, 'UTF-8') ?></p>
+    <p><b>Вік:</b> <?= $user['age'] !== null && $user['age'] !== '' ? (int)$user['age'] : 'Не вказано' ?></p>
 
-<p><b>Email:</b> <?= htmlspecialchars($user['email']) ?></p>
-<p><b>Имя:</b> <?= htmlspecialchars($user['name'] ?? 'Не указано') ?></p>
-<p><b>Пол:</b> <?= $genderText ?></p>
-<p><b>Возраст:</b> <?= $user['age'] ?? 'Не указан' ?></p>
+    <p><b>Дата реєстрації:</b>
+        <?= htmlspecialchars($user['created_at'] ?? 'Немає даних', ENT_QUOTES, 'UTF-8') ?>
+    </p>
 
-<p><b>Дата регистрации:</b>
-<?= $user['created_at'] ?? 'Нет данных' ?>
-</p>
-
-<a href="index.php">← Главная</a>
-<a href="logout.php" style="color:#f87171;">Выйти</a>
-
+    <a href="index.php">← На головну</a>
+    <a href="logout.php" style="color:#f87171;">Вийти з облікового запису</a>
 </div>
-
 </body>
 </html>

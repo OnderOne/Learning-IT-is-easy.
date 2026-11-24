@@ -6,83 +6,79 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
-    $email    = trim($_POST['email'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $username = trim($_POST['username'] ?? '');
-    $name     = trim($_POST['name'] ?? '');
-    $gender   = $_POST['gender'] ?? '';
-    $age      = !empty($_POST['age']) ? (int)$_POST['age'] : null;
+    $name = trim($_POST['name'] ?? '');
+    $gender = $_POST['gender'] ?? '';
+    $age = !empty($_POST['age']) ? (int)$_POST['age'] : null;
     $password = $_POST['password'] ?? '';
 
     try {
-
         if (!$email || !$username || !$password) {
-            $error = "Заполни все обязательные поля!";
-        }
-        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = "Некорректный email!";
-        }
-        elseif (strlen($password) < 6) {
-            $error = "Пароль минимум 6 символов!";
-        }
-        else {
-
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE email=? OR username=?");
+            $error = "Заповніть усі обов’язкові поля!";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = "Некоректна адреса електронної пошти!";
+        } elseif (strlen($password) < 6) {
+            $error = "Пароль має містити щонайменше 6 символів!";
+        } else {
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR username = ?");
             $stmt->execute([$email, $username]);
 
-            if ($stmt->rowCount() > 0) {
-                $error = "Пользователь уже существует!";
+            if ($stmt->fetch()) {
+                $error = "Користувач із такою електронною поштою або логіном уже існує!";
             } else {
-
                 $hash = password_hash($password, PASSWORD_DEFAULT);
 
                 $stmt = $pdo->prepare("
                     INSERT INTO users (email, username, name, gender, age, password)
                     VALUES (?, ?, ?, ?, ?, ?)
                 ");
-
                 $stmt->execute([$email, $username, $name, $gender, $age, $hash]);
 
                 header("Location: login.php");
                 exit;
             }
         }
-
     } catch (PDOException $e) {
-        $error = "DB ошибка: " . $e->getMessage();
+        $error = "Помилка бази даних: " . $e->getMessage();
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Регистрация</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Реєстрація</title>
 
 <style>
 body {
-    margin:0;
-    font-family: Arial;
+    margin: 0;
+    font-family: Arial, sans-serif;
     background: #0b1220;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+    box-sizing: border-box;
 }
 
 .container {
     width: 380px;
+    max-width: calc(100% - 40px);
     background: #111827;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 0 25px rgba(0,0,0,0.6);
     color: white;
+    box-sizing: border-box;
 }
 
 h2 {
-    text-align:center;
-    margin-bottom:15px;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 input, select {
@@ -136,72 +132,69 @@ button {
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 10px;
-    text-align:center;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .pass-box {
     position: relative;
 }
 
+.pass-box input {
+    padding-right: 45px;
+}
+
 .eye {
-    position:absolute;
-    right:12px;
-    top:50%;
-    transform:translateY(-50%);
-    cursor:pointer;
-    color:#9ca3af;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #9ca3af;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
+    <h2>Реєстрація</h2>
 
-<h2>Регистрация</h2>
+    <?php if (isset($error)): ?>
+        <div class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+    <?php endif; ?>
 
-<?php if(isset($error)): ?>
-<div class="error"><?= $error ?></div>
-<?php endif; ?>
+    <form method="POST">
+        <input type="email" name="email" placeholder="Електронна пошта" autocomplete="email" required>
+        <input type="text" name="username" placeholder="Логін" autocomplete="username" required>
+        <input type="text" name="name" placeholder="Ім’я" autocomplete="name">
 
-<form method="POST">
+        <select name="gender">
+            <option value="">Оберіть стать</option>
+            <option value="male">Чоловіча</option>
+            <option value="female">Жіноча</option>
+            <option value="other">Інша</option>
+        </select>
 
-<input type="email" name="email" placeholder="Email" required>
+        <input type="number" name="age" placeholder="Вік" min="1" max="120">
 
-<input type="text" name="username" placeholder="Логин" required>
+        <div class="pass-box">
+            <input type="password" id="password" name="password" placeholder="Пароль (від 6 символів)" autocomplete="new-password" required>
+            <span class="eye" onclick="togglePass()" title="Показати або приховати пароль" role="button" tabindex="0" aria-label="Показати або приховати пароль">👁</span>
+        </div>
 
-<input type="text" name="name" placeholder="Имя">
+        <button class="btn-register" type="submit">Створити обліковий запис</button>
+    </form>
 
-<select name="gender">
-    <option value="">Пол</option>
-    <option value="male">Мужчина</option>
-    <option value="female">Женщина</option>
-    <option value="other">Другое</option>
-</select>
-
-<input type="number" name="age" placeholder="Возраст">
-
-<div class="pass-box">
-    <input type="password" id="password" name="password" placeholder="Пароль" required>
-    <span class="eye" onclick="togglePass()">👁</span>
-</div>
-
-<button class="btn-register" type="submit">Создать аккаунт</button>
-
-</form>
-
-<a href="login.php">
-    <button class="btn-login">Уже есть аккаунт? Войти</button>
-</a>
-
+    <a href="login.php" style="text-decoration:none;">
+        <button class="btn-login" type="button">Уже маєте обліковий запис? Увійти</button>
+    </a>
 </div>
 
 <script>
 function togglePass() {
-    let p = document.getElementById("password");
-    p.type = (p.type === "password") ? "text" : "password";
+    const password = document.getElementById("password");
+    password.type = password.type === "password" ? "text" : "password";
 }
 </script>
-
 </body>
 </html>

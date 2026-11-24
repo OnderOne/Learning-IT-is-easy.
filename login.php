@@ -3,17 +3,16 @@ session_start();
 require_once 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
     $login = trim($_POST['login'] ?? '');
     $password = $_POST['password'] ?? '';
 
     try {
-
         $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? OR username = ?");
         $stmt->execute([$login, $login]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
+            session_regenerate_id(true);
 
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = $user['email'];
@@ -22,46 +21,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             header("Location: index.php");
             exit;
-
         } else {
-            $error = "Неверный логин или пароль!";
+            $error = "Неправильна електронна пошта, логін або пароль!";
         }
-
     } catch (PDOException $e) {
-        $error = "Ошибка БД: " . $e->getMessage();
+        $error = "Помилка бази даних: " . $e->getMessage();
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Вход</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вхід</title>
 
 <style>
 body {
-    margin:0;
-    font-family: Arial;
+    margin: 0;
+    font-family: Arial, sans-serif;
     background: #0b1220;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
 .container {
     width: 380px;
+    max-width: calc(100% - 40px);
     background: #111827;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 0 25px rgba(0,0,0,0.6);
     color: white;
+    box-sizing: border-box;
 }
 
 h2 {
-    text-align:center;
-    margin-bottom:15px;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 input {
@@ -77,7 +77,7 @@ input {
 }
 
 input::placeholder {
-    color:#9ca3af;
+    color: #9ca3af;
 }
 
 button {
@@ -115,36 +115,29 @@ button {
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 10px;
-    text-align:center;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
+    <h2>Вхід</h2>
 
-<h2>Вход</h2>
+    <?php if (isset($error)): ?>
+        <div class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+    <?php endif; ?>
 
-<?php if(isset($error)): ?>
-<div class="error"><?= $error ?></div>
-<?php endif; ?>
+    <form method="POST">
+        <input type="text" name="login" placeholder="Електронна пошта або логін" autocomplete="username" required>
+        <input type="password" name="password" placeholder="Пароль" autocomplete="current-password" required>
+        <button class="btn-login" type="submit">Увійти</button>
+    </form>
 
-<form method="POST">
-
-<input type="text" name="login" placeholder="Email или логин" required>
-
-<input type="password" name="password" placeholder="Пароль" required>
-
-<button class="btn-login" type="submit">Войти</button>
-
-</form>
-
-<a href="register.php">
-    <button class="btn-register">Нет аккаунта? Регистрация</button>
-</a>
-
+    <a href="register.php" style="text-decoration:none;">
+        <button class="btn-register" type="button">Немає облікового запису? Зареєструватися</button>
+    </a>
 </div>
-
 </body>
 </html>
